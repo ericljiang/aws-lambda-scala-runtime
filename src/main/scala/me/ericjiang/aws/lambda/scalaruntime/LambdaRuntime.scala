@@ -1,5 +1,6 @@
 package me.ericjiang.aws.lambda.scalaruntime
 
+import com.typesafe.scalalogging.LazyLogging
 import io.circe.parser.decode
 import io.circe.syntax._
 import me.ericjiang.aws.lambda.scalaruntime.runtimeinterface.model.{ErrorRequest, Invocation, RuntimeInterfaceError, StatusResponse}
@@ -9,15 +10,16 @@ import scala.annotation.tailrec
 import scala.language.implicitConversions
 import scala.util.{Failure, Success, Try}
 
-class LambdaRuntime(runtimeInterface: RuntimeInterface = new DefaultRuntimeInterface) {
+class LambdaRuntime(runtimeInterface: RuntimeInterface = new DefaultRuntimeInterface) extends LazyLogging {
 
   @throws[LambdaRuntimeFailure]("if an unrecoverable exception occurs")
   def run[I, O](handler: I => O)(implicit decoder: io.circe.Decoder[I], encoder: io.circe.Encoder[O]): Nothing = {
-    val handlerWithSerialization: String => String = decode[I](_).toTry
+    def handlerWithSerialization(input: String): String = decode[I](input).toTry
+      .recover(exception => throw new RuntimeException(s"Error deserializing input '$input'", exception))
       .map(handler(_))
       .map(_.asJson.toString)
       .get
-    run(handlerWithSerialization)
+    run(handlerWithSerialization _)
   }
 
   @tailrec
@@ -26,7 +28,7 @@ class LambdaRuntime(runtimeInterface: RuntimeInterface = new DefaultRuntimeInter
     Try(runtimeInterface.getNextInvocation).flatten
       .flatMap(handleInvocation(_, handler))
       .recover { exception =>
-        println("Exiting due to unhandled exception.")
+        logger.error("Exiting due to unhandled exception.", exception)
         runtimeInterface.postInitializationError(ErrorRequest(exception)) match {
           case Success(_) => println("Successfully reported unhandled exception to the runtime interface.")
           case Failure(_) => println("Failed to report unhandled exception to the runtime interface.")
@@ -43,11 +45,11 @@ class LambdaRuntime(runtimeInterface: RuntimeInterface = new DefaultRuntimeInter
       .recoverWith {
         // runtime API specifies not to recover from container errors
         case exception: RuntimeInterfaceError if exception.statusCode == 500 =>
-          println("Encountered container failure from the runtime interface.")
+          logger.error("Encountered container failure from the runtime interface.", exception)
           throw exception
         // attempt to report all other errors back to the runtime interface and continue
         case exception =>
-          println("Encountered exception during invocation. Attempting to report it to the runtime interface.")
+          logger.error("Encountered exception during invocation. Attempting to report it to the runtime interface.", exception)
           runtimeInterface.postInvocationError(invocation.headers.awsRequestId, ErrorRequest(exception))
       }
 }
