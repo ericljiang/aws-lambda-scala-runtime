@@ -10,7 +10,7 @@ object Main extends App {
   println("Hello, World!")
   case class Request(name: String)
   case class Response(output: String)
-  val f = Future {
+  Future {
     new LambdaRuntime(MockRuntimeInterface)
       .run((request: Request) => Response(s"Hello, ${request.name}"))
   }
