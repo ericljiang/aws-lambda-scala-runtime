@@ -7,7 +7,9 @@ import me.ericjiang.aws.lambda.scalaruntime.model.{ErrorRequest, Invocation, Sta
 import sttp.client3._
 import sttp.client3.circe._
 import sttp.client3.httpclient.HttpClientSyncBackend
+import sttp.model.Uri
 
+import scala.concurrent.duration.Duration
 import scala.util.Try
 
 class DefaultRuntimeInterface(
@@ -15,9 +17,12 @@ class DefaultRuntimeInterface(
   sttpBackend: SttpBackend[Identity, Any] = DefaultSttpBackend
 ) extends RuntimeInterface {
 
+  private val apiVersion = "2018-06-01"
+
   override def getNextInvocation: Try[Invocation] =
     Try(basicRequest
-      .get(uri"http://$endpoint/2018-06-01/runtime/invocation/next")
+      .get(uri"http://$endpoint/$apiVersion/runtime/invocation/next")
+      .readTimeout(Duration.Inf)
       .response(asJson[Invocation])
       .send(sttpBackend)
       .body
@@ -26,37 +31,25 @@ class DefaultRuntimeInterface(
       .recover(wrapHttpErrors("Server error while retrieving next invocation."))
 
   override def postInvocationResponse(awsRequestId: String, response: String): Try[StatusResponse] =
-    Try(basicRequest
-      .post(uri"http://$endpoint/2018-06-01/runtime/invocation/$awsRequestId/response")
-      .body(response)
-      .response(asJson[StatusResponse])
-      .send(sttpBackend)
-      .body
-      .toTry
-    ).flatten
+    post(uri"http://$endpoint/$apiVersion/runtime/invocation/$awsRequestId/response", response)
       .recover(wrapHttpErrors("Server error while posting invocation response."))
 
   override def postInitializationError(errorRequest: ErrorRequest): Try[StatusResponse] =
-    Try(basicRequest
-      .post(uri"http://$endpoint/2018-06-01/runtime/init/error")
-      .body(errorRequest)
-      .response(asJson[StatusResponse])
-      .send(sttpBackend)
-      .body
-      .toTry
-    ).flatten
+    post(uri"http://$endpoint/$apiVersion/runtime/init/error", errorRequest)
       .recover(wrapHttpErrors("Server error while posting initialization error."))
 
   override def postInvocationError(awsRequestId: String, errorRequest: ErrorRequest): Try[StatusResponse] =
-    Try(basicRequest
-      .post(uri"http://$endpoint/2018-06-01/runtime/invocation/$awsRequestId/error")
-      .body(errorRequest)
-      .response(asJson[StatusResponse])
-      .send(sttpBackend)
-      .body
-      .toTry
-    ).flatten
+    post(uri"http://$endpoint/$apiVersion/runtime/invocation/$awsRequestId/error", errorRequest)
       .recover(wrapHttpErrors("Server error while posting invocation error."))
+
+  private def post[B: BodySerializer](uri: Uri, body: B): Try[StatusResponse] =Try(basicRequest
+    .post(uri)
+    .body(body)
+    .response(asJson[StatusResponse])
+    .send(sttpBackend)
+    .body
+    .toTry
+  ).flatten
 
   private def wrapHttpErrors(message: String): PartialFunction[Throwable, Nothing] = {
     case HttpError(body: String, statusCode) => throw RuntimeInterfaceError(message, statusCode.code, body)

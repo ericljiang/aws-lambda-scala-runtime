@@ -1,35 +1,27 @@
 package me.ericjiang.aws.lambda.scalaruntime
-import me.ericjiang.aws.lambda.scalaruntime.model.{ErrorRequest, Invocation, InvocationHeaders, StatusResponse}
+import me.ericjiang.aws.lambda.scalaruntime.model.{ErrorRequest, Invocation, StatusResponse}
 
-import scala.collection.mutable
+import java.util.concurrent.LinkedBlockingQueue
 import scala.util.{Success, Try}
 
 object MockRuntimeInterface extends RuntimeInterface {
 
-  private val invocations = mutable.Queue(Invocation(
-    payload = """{"name": "Eric"}""",
-    headers = InvocationHeaders(
-      awsRequestId = "123",
-      deadlineMs = System.currentTimeMillis() + 10000,
-      invokedFunctionArn = "",
-      traceId = "",
-      clientContext = "",
-      cognitoIdentity = "")))
+  val invocations = new LinkedBlockingQueue[Invocation]
 
-  override def getNextInvocation: Try[Invocation] = Success(invocations.dequeue)
+  override def getNextInvocation: Try[Invocation] = Try(invocations.take())
 
   override def postInvocationResponse(awsRequestId: String, response: String): Try[StatusResponse] = {
-    println(s"Received invocation response for request $awsRequestId: $response")
+    println(s"Received invocation response for request $awsRequestId:\n$response")
     Success(StatusResponse("success"))
   }
 
   override def postInitializationError(errorRequest: ErrorRequest): Try[StatusResponse] = {
-    println(s"Received initialization error: $errorRequest")
+    println(s"Received initialization error:\n$errorRequest")
     Success(StatusResponse("success"))
   }
 
   override def postInvocationError(awsRequestId: String, errorRequest: ErrorRequest): Try[StatusResponse] = {
-    println(s"Received invocation error for request $awsRequestId: $errorRequest")
+    println(s"Received invocation error for request $awsRequestId:\n$errorRequest")
     Success(StatusResponse("success"))
   }
 }
