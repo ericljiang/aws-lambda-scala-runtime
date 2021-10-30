@@ -2,9 +2,8 @@ package me.ericjiang.aws.lambda.scalaruntime
 
 import io.circe.parser.decode
 import io.circe.syntax._
-
-import me.ericjiang.aws.lambda.scalaruntime.exception.{LambdaRuntimeFailure, RuntimeInterfaceError}
-import me.ericjiang.aws.lambda.scalaruntime.model.{ErrorRequest, Invocation, StatusResponse}
+import me.ericjiang.aws.lambda.scalaruntime.runtimeinterface.model.{ErrorRequest, Invocation, RuntimeInterfaceError, StatusResponse}
+import me.ericjiang.aws.lambda.scalaruntime.runtimeinterface.{DefaultRuntimeInterface, RuntimeInterface}
 
 import scala.annotation.tailrec
 import scala.language.implicitConversions

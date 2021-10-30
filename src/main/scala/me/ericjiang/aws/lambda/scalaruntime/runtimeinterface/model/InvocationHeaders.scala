@@ -1,4 +1,4 @@
-package me.ericjiang.aws.lambda.scalaruntime.model
+package me.ericjiang.aws.lambda.scalaruntime.runtimeinterface.model
 
 case class InvocationHeaders(
   awsRequestId: String,

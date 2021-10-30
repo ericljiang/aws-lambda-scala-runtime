@@ -1,6 +1,6 @@
-package me.ericjiang.aws.lambda.scalaruntime
+package me.ericjiang.aws.lambda.scalaruntime.runtimeinterface
 
-import me.ericjiang.aws.lambda.scalaruntime.model._
+import me.ericjiang.aws.lambda.scalaruntime.runtimeinterface.model.{ErrorRequest, Invocation, StatusResponse}
 
 import scala.util.Try
 
@@ -15,7 +15,10 @@ import scala.util.Try
  */
 trait RuntimeInterface {
   def getNextInvocation: Try[Invocation]
+
   def postInvocationResponse(awsRequestId: String, response: String): Try[StatusResponse]
+
   def postInitializationError(errorRequest: ErrorRequest): Try[StatusResponse]
+
   def postInvocationError(awsRequestId: String, errorRequest: ErrorRequest): Try[StatusResponse]
 }

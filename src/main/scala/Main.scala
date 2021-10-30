@@ -1,6 +1,7 @@
 import io.circe.generic.auto._
-import me.ericjiang.aws.lambda.scalaruntime.model.{Invocation, InvocationHeaders}
-import me.ericjiang.aws.lambda.scalaruntime.{LambdaRuntime, MockRuntimeInterface}
+import me.ericjiang.aws.lambda.scalaruntime.LambdaRuntime
+import me.ericjiang.aws.lambda.scalaruntime.runtimeinterface.MockRuntimeInterface
+import me.ericjiang.aws.lambda.scalaruntime.runtimeinterface.model.{Invocation, InvocationHeaders}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -12,10 +13,10 @@ object Main extends App {
   case class Response(output: String)
   Future {
     new LambdaRuntime(MockRuntimeInterface)
-      .run((request: Request) => Response(s"Hello, ${request.name}"))
+      .run((request: String) => Response(s"Hello, $request"))
   }
   MockRuntimeInterface.invocations.add(Invocation(
-    payload = """{"name": "Eric"}""",
+    payload = """Eric""",
     headers = InvocationHeaders(
       awsRequestId = "123",
       deadlineMs = System.currentTimeMillis() + 1.second.toMillis,

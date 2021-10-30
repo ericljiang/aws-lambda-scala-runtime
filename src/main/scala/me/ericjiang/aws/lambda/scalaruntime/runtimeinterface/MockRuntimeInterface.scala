@@ -1,5 +1,6 @@
-package me.ericjiang.aws.lambda.scalaruntime
-import me.ericjiang.aws.lambda.scalaruntime.model.{ErrorRequest, Invocation, StatusResponse}
+package me.ericjiang.aws.lambda.scalaruntime.runtimeinterface
+
+import me.ericjiang.aws.lambda.scalaruntime.runtimeinterface.model.{ErrorRequest, Invocation, StatusResponse}
 
 import java.util.concurrent.LinkedBlockingQueue
 import scala.util.{Success, Try}

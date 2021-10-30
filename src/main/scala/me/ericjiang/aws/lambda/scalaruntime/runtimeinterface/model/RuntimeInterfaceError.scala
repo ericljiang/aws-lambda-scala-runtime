@@ -1,4 +1,4 @@
-package me.ericjiang.aws.lambda.scalaruntime.exception
+package me.ericjiang.aws.lambda.scalaruntime.runtimeinterface.model
 
 /** Represents errors returned by the runtime interface. */
 case class RuntimeInterfaceError(message: String, statusCode: Int, body: String)

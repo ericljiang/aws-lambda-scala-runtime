@@ -1,9 +1,8 @@
-package me.ericjiang.aws.lambda.scalaruntime
+package me.ericjiang.aws.lambda.scalaruntime.runtimeinterface
 
 import io.circe.generic.auto._
-import me.ericjiang.aws.lambda.scalaruntime.DefaultRuntimeInterface.{DefaultEndpoint, DefaultSttpBackend}
-import me.ericjiang.aws.lambda.scalaruntime.exception.RuntimeInterfaceError
-import me.ericjiang.aws.lambda.scalaruntime.model.{ErrorRequest, Invocation, StatusResponse}
+import me.ericjiang.aws.lambda.scalaruntime.runtimeinterface.DefaultRuntimeInterface.{DefaultEndpoint, DefaultSttpBackend}
+import me.ericjiang.aws.lambda.scalaruntime.runtimeinterface.model.{ErrorRequest, Invocation, RuntimeInterfaceError, StatusResponse}
 import sttp.client3._
 import sttp.client3.circe._
 import sttp.client3.httpclient.HttpClientSyncBackend
@@ -42,7 +41,7 @@ class DefaultRuntimeInterface(
     post(uri"http://$endpoint/$apiVersion/runtime/invocation/$awsRequestId/error", errorRequest)
       .recover(wrapHttpErrors("Server error while posting invocation error."))
 
-  private def post[B: BodySerializer](uri: Uri, body: B): Try[StatusResponse] =Try(basicRequest
+  private def post[B: BodySerializer](uri: Uri, body: B): Try[StatusResponse] = Try(basicRequest
     .post(uri)
     .body(body)
     .response(asJson[StatusResponse])
