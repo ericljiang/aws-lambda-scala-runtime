@@ -20,6 +20,7 @@ lazy val root = project
       "io.circe" %% "circe-core" % "0.14.1",
       "io.circe" %% "circe-generic" % "0.14.1",
       "io.circe" %% "circe-parser" % "0.14.1",
+      "org.scalatest" %% "scalatest" % "3.2.10" % "test",
     ),
 
     Compile / mainClass := Some("Main"),
